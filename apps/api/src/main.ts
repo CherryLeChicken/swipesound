@@ -13,7 +13,7 @@ async function bootstrap() {
   app.setGlobalPrefix(globalPrefix);
   
   // Enable CORS for production
-  app.enableCORS({
+  app.enableCors({
     origin: true, // In production, replace with your actual Vercel URL
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
