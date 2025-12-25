@@ -1,0 +1,219 @@
+{
+    "stack_id": "internal_tool_nx_nest_vite_postgres_tailwind3",
+    "purpose": "Internal full-stack tool optimized for AI-assisted development. Nx monorepo with NestJS backend, React+Vite frontend, shadcn/ui (Radix primitives), PostgreSQL, and Docker.",
+    "monorepo": {
+      "tooling": "nx",
+      "package_manager": "pnpm",
+      "layout": {
+        "apps": {
+          "api": "apps/api",
+          "web": "apps/web"
+        },
+        "libs": {
+          "shared-types": "libs/shared-types",
+          "shared-ui": "libs/shared-ui",
+          "shared-utils": "libs/shared-utils"
+        }
+      }
+    },
+    "backend": {
+      "framework": "nestjs",
+      "language": "typescript",
+      "runtime": "node",
+      "node_version": ">=18",
+      "module_system": "commonjs",
+      "api_style": "rest",
+      "directory": "apps/api/src",
+      "orm": {
+        "library": "typeorm",
+        "pattern": "DataSource",
+        "decorators_required": true,
+        "entities_glob": "apps/api/src/**/*.entity.ts",
+        "migrations": {
+          "enabled": true,
+          "directory": "apps/api/src/migrations",
+          "run_on_startup": false
+        }
+      },
+      "database": {
+        "engine": "postgresql",
+        "version": ">=14",
+        "driver": "pg"
+      },
+      "validation": {
+        "dto_validation": "class-validator",
+        "transformation": "class-transformer"
+      },
+      "auth": {
+        "strategy": "jwt",
+        "libraries": [
+          "@nestjs/passport",
+          "passport",
+          "passport-jwt",
+          "bcrypt"
+        ]
+      },
+      "documentation": {
+        "openapi": "@nestjs/swagger",
+        "endpoint": "/docs"
+      },
+      "dev_runtime": {
+        "preferred": "tsx_with_swc",
+        "fallback": "ts-node-dev",
+        "build": "tsc_then_node",
+        "typescript_compiler_options_required": {
+          "experimentalDecorators": true,
+          "emitDecoratorMetadata": true,
+          "useDefineForClassFields": false
+        }
+      },
+      "common_libraries": [
+        "@nestjs/common",
+        "@nestjs/core",
+        "@nestjs/platform-express",
+        "@nestjs/config",
+        "@nestjs/typeorm",
+        "typeorm",
+        "pg",
+        "reflect-metadata",
+        "class-validator",
+        "class-transformer",
+        "@nestjs/swagger",
+        "swagger-ui-express",
+        "passport",
+        "passport-jwt",
+        "bcrypt"
+      ]
+    },
+    "frontend": {
+      "framework": "react",
+      "bundler": "vite",
+      "language": "typescript",
+      "module_system": "esm",
+      "directory": "apps/web/src",
+      "routing": {
+        "library": "react-router-dom",
+        "pattern": "SPA_with_nested_routes"
+      },
+      "styling": {
+        "css_framework": "tailwindcss",
+        "tailwind_version": "3.x",
+        "component_system": "shadcn_ui",
+        "primitive_library": "radix_ui",
+        "icons": "lucide-react"
+      },
+      "data_fetching": {
+        "http_client": "fetch",
+        "server_state": "@tanstack/react-query"
+      },
+      "state_management": {
+        "client_state": "zustand"
+      },
+      "forms_and_validation": {
+        "form_library": "react-hook-form",
+        "schema_validation": "zod"
+      },
+      "common_libraries": [
+        "react",
+        "react-dom",
+        "react-router-dom",
+        "vite",
+        "typescript",
+        "tailwindcss@^3",
+        "postcss",
+        "autoprefixer",
+        "@tanstack/react-query",
+        "react-hook-form",
+        "@hookform/resolvers",
+        "zod",
+        "zustand",
+        "lucide-react",
+        "date-fns",
+        "axios",
+        "@radix-ui/react-dialog",
+        "@radix-ui/react-dropdown-menu",
+        "@radix-ui/react-popover",
+        "@radix-ui/react-tabs",
+        "@radix-ui/react-toast"
+      ],
+      "shadcn_ui_notes": {
+        "installation_method": "shadcn_cli",
+        "note": "shadcn/ui is code-copied into the repo (not a single npm package). Prefer keeping components in apps/web/src/components/ui or libs/shared-ui."
+      }
+    },
+    "shared": {
+      "shared-types": {
+        "location": "libs/shared-types",
+        "usage": "Shared TypeScript types, DTO interfaces, enums, and (optionally) Zod schemas consumed by both frontend and backend."
+      },
+      "shared-ui": {
+        "location": "libs/shared-ui",
+        "usage": "Reusable UI components (shadcn/ui + Radix) shared across apps (optional; can also keep UI local to web app)."
+      },
+      "shared-utils": {
+        "location": "libs/shared-utils",
+        "usage": "Pure utilities and helpers with no framework-specific dependencies."
+      }
+    },
+    "infrastructure": {
+      "containerization": {
+        "tool": "docker",
+        "compose": true
+      },
+      "services": {
+        "postgres": {
+          "image": "postgres:16",
+          "port": 5432,
+          "env_vars": ["POSTGRES_DB", "POSTGRES_USER", "POSTGRES_PASSWORD"],
+          "volume": "postgres_data"
+        }
+      },
+      "local_dev": {
+        "orchestration": "docker-compose",
+        "services": ["postgres"],
+        "notes": [
+          "Typically run web/api via Nx locally for fast HMR, and run Postgres in Docker.",
+          "Optionally containerize api/web for parity in CI or production."
+        ]
+      }
+    },
+    "testing": {
+      "backend": {
+        "unit": "jest",
+        "e2e": "supertest"
+      },
+      "frontend": {
+        "unit": "vitest",
+        "component": "@testing-library/react",
+        "e2e": "playwright"
+      }
+    },
+    "conventions": {
+      "linting": "eslint",
+      "formatting": "prettier",
+      "typescript": {
+        "strict": true
+      },
+      "backend_conventions": [
+        "Use feature modules (module/controller/service).",
+        "Prefer DTO classes + ValidationPipe (whitelist + transform).",
+        "Use TypeORM migrations (no synchronize in production).",
+        "Ensure reflect-metadata is imported once at bootstrap."
+      ],
+      "frontend_conventions": [
+        "Use Tailwind v3 utilities for styling.",
+        "Prefer shadcn/ui components built on Radix primitives.",
+        "Use React Query for server state; Zustand only for UI/client state."
+      ]
+    },
+    "ai_instructions": {
+      "default_behavior": "Use this stack unless explicitly overridden.",
+      "do_not_use": ["Next.js", "Prisma", "Bun", "Deno", "esbuild_for_backend"],
+      "rules": [
+        "Backend must remain CommonJS-compatible and support TypeORM legacy decorators.",
+        "Frontend must be React+Vite with Tailwind v3 and Radix primitives.",
+        "Prefer shared types in libs/shared-types over duplicating interfaces.",
+        "Do not suggest replacing Nx, TypeORM, Postgres, Tailwind, or Radix unless asked."
+      ]
+    }
+  }
