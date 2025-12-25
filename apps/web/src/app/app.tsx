@@ -27,15 +27,15 @@ function AuthView({ onBack }: { onBack: () => void }) {
       let body: any = { email };
 
       if (view === 'login') {
-        endpoint = '/api/auth/login';
+        endpoint = `${API_BASE_URL}/auth/login`;
         body.password = password;
       } else if (view === 'signup') {
-        endpoint = '/api/auth/register';
+        endpoint = `${API_BASE_URL}/auth/register`;
         body.password = password;
       } else if (view === 'forgot') {
-        endpoint = '/api/auth/forgot-password';
+        endpoint = `${API_BASE_URL}/auth/forgot-password`;
       } else if (view === 'reset') {
-        endpoint = '/api/auth/reset-password';
+        endpoint = `${API_BASE_URL}/auth/reset-password`;
         body = { token: resetToken, password };
       }
 
@@ -232,7 +232,7 @@ function DiscoveryView({ onAuth }: { onBack?: () => void, onAuth?: () => void })
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
-      const res = await fetch(`${API_BASE_URL}/music/discover', { headers });
+      const res = await fetch(`${API_BASE_URL}/music/discover`, { headers });
       if (!res.ok) throw new Error('Failed to fetch songs');
       const data = await res.json();
       return data;
@@ -279,7 +279,7 @@ function DiscoveryView({ onAuth }: { onBack?: () => void, onAuth?: () => void })
         headers['x-session-id'] = sessionId;
       }
 
-      const res = await fetch(`${API_BASE_URL}/music/swipe', {
+      const res = await fetch(`${API_BASE_URL}/music/swipe`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ 
@@ -420,7 +420,7 @@ function LikedSongsView() {
       } else {
         headers['x-session-id'] = sessionId;
       }
-      const res = await fetch(`${API_BASE_URL}/music/liked', { headers });
+      const res = await fetch(`${API_BASE_URL}/music/liked`, { headers });
       return res.json();
     },
     enabled: !!sessionId || !!token,
@@ -434,7 +434,7 @@ function LikedSongsView() {
       } else {
         headers['x-session-id'] = sessionId;
       }
-      const res = await fetch(`/api/music/liked/${songId}`, {
+      const res = await fetch(`${API_BASE_URL}/music/liked/${songId}`, {
         method: 'DELETE',
         headers
       });
