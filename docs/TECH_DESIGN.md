@@ -74,7 +74,18 @@ Following the `stack.json` and `devrules.md`, the system will be built as an Nx 
    - **React Query**: Manage fetching songs and posting swipes.
      - **Verification**: Check the Network tab in DevTools to ensure requests are being made to `/api/music/discover`.
 
-### Phase 5: Polishing & UX
+### Phase 5: Genre Preferences
+1. **Define Genre Types**: Add `Genre` interface and list of common genres to `shared-types`.
+2. **Backend: User Genre Storage**:
+   - Update `User` entity to store selected genre IDs.
+   - Update `AuthService` to allow saving/retrieving genre preferences.
+3. **Backend: Genre-Based Discovery**:
+   - Update `MusicService.getDiscoverSongs` to prioritize tracks from selected genres if no liked songs exist yet.
+4. **Frontend: Genre Selection UI**:
+   - Create an onboarding view where users select at least 3 genres they like.
+   - **Verification**: Ensure selection is saved and the first set of discovery cards match the chosen genres.
+
+### Phase 6: Polishing & UX
 1. **Shadcn/UI Integration**: Use `Card`, `Button`, and `ScrollArea` for the "Liked Songs" list.
 2. **Accessibility**: Add keyboard shortcuts and visible tap buttons for swipe actions.
      - **Verification**: Test swiping with Left/Right arrow keys.

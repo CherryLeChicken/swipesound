@@ -1,10 +1,10 @@
 import { QueryClient, QueryClientProvider, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, useMemo } from 'react';
-import { Music, Heart, Disc, Loader2, ListMusic, Play, Trash2, LogIn, User as UserIcon, LogOut, Mail, Lock } from 'lucide-react';
+import { Music, Heart, Disc, Loader2, ListMusic, Play, Trash2, LogIn, User as UserIcon, LogOut, Mail, Lock, Check } from 'lucide-react';
 import { SwipeCard } from './components/SwipeCard';
 import { useStore } from './store';
 import { useAudioPlayer } from './hooks/useAudioPlayer';
-import { Song, SwipeType, AuthResponse } from '@swipesound/shared-types';
+import { Song, SwipeType, AuthResponse, Genre } from '@swipesound/shared-types';
 import { useEffect } from 'react';
 
 const queryClient = new QueryClient();
@@ -204,6 +204,101 @@ function AuthView({ onBack }: { onBack: () => void }) {
           className="w-full text-sm text-slate-500 hover:text-slate-300 transition-colors pt-2 border-t border-slate-800/50"
         >
           Continue as Guest
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function GenreSelectionView({ onComplete }: { onComplete: () => void }) {
+  const { token, setUser, user } = useStore();
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [error, setError] = useState('');
+
+  const { data: genres, isLoading } = useQuery<Genre[]>({
+    queryKey: ['genres'],
+    queryFn: async () => {
+      const res = await fetch(`${API_BASE_URL}/auth/genres`);
+      return res.json();
+    },
+  });
+
+  const mutation = useMutation({
+    mutationFn: async (genreIds: number[]) => {
+      const res = await fetch(`${API_BASE_URL}/auth/update-genres`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ genreIds }),
+      });
+      if (!res.ok) throw new Error('Failed to save preferences');
+      return res.json();
+    },
+    onSuccess: () => {
+      if (user) {
+        setUser({ ...user, preferredGenres: selectedIds });
+      }
+      onComplete();
+    },
+    onError: (err: any) => setError(err.message),
+  });
+
+  const toggleGenre = (id: number) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(g => g !== id) : [...prev, id]
+    );
+  };
+
+  if (isLoading) return <div className="flex items-center justify-center h-full"><Loader2 className="w-8 h-8 animate-spin text-pink-500" /></div>;
+
+  return (
+    <div className="flex flex-col h-full p-6 animate-in fade-in duration-500">
+      <div className="max-w-md mx-auto w-full space-y-8 mt-12">
+        <div className="text-center">
+          <h2 className="text-3xl font-bold">What do you vibe to?</h2>
+          <p className="text-slate-400 mt-2">Select at least 3 genres to start your discovery.</p>
+        </div>
+
+        {error && <div className="p-3 text-sm bg-red-500/10 border border-red-500/50 text-red-500 rounded-xl">{error}</div>}
+
+        <div className="grid grid-cols-2 gap-4">
+          {genres?.map(genre => (
+            <button
+              key={genre.id}
+              onClick={() => toggleGenre(genre.id)}
+              className={`relative overflow-hidden aspect-video rounded-2xl border-2 transition-all group ${
+                selectedIds.includes(genre.id) 
+                  ? 'border-pink-500 ring-2 ring-pink-500/20' 
+                  : 'border-slate-800 hover:border-slate-700'
+              }`}
+            >
+              {genre.picture && (
+                <img 
+                  src={genre.picture} 
+                  alt={genre.name}
+                  className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-opacity"
+                />
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent" />
+              <span className="absolute bottom-3 left-3 font-bold text-lg">{genre.name}</span>
+              {selectedIds.includes(genre.id) && (
+                <div className="absolute top-2 right-2 bg-pink-500 rounded-full p-1">
+                  <Check className="w-3 h-3 text-white" strokeWidth={4} />
+                </div>
+              )}
+            </button>
+          ))}
+        </div>
+
+        <button
+          disabled={selectedIds.length < 3 || mutation.isPending}
+          onClick={() => mutation.mutate(selectedIds)}
+          className="w-full py-4 bg-pink-500 hover:bg-pink-600 disabled:opacity-50 disabled:bg-slate-800 rounded-2xl font-bold text-lg transition-all active:scale-[0.98] shadow-xl shadow-pink-500/10"
+        >
+          {mutation.isPending ? <Loader2 className="w-6 h-6 animate-spin mx-auto" /> : 
+           selectedIds.length < 3 ? `Select ${3 - selectedIds.length} more` : "Let's Go!"}
         </button>
       </div>
     </div>
@@ -511,6 +606,8 @@ export function App() {
     queryClient.invalidateQueries();
   };
 
+  const showGenreSelection = user && (!user.preferredGenres || user.preferredGenres.length === 0);
+
   return (
     <QueryClientProvider client={queryClient}>
       <div className="flex h-screen w-full flex-col bg-slate-950 text-slate-50 font-sans overflow-hidden select-none">
@@ -550,34 +647,42 @@ export function App() {
 
         {/* Main Content */}
         <main className="flex-1 relative overflow-hidden flex flex-col items-center justify-center">
-          <div className={`absolute inset-0 transition-all duration-300 ${activeTab === 'discover' ? 'opacity-100 translate-x-0 z-10' : 'opacity-0 -translate-x-full z-0 pointer-events-none'}`}>
-            <DiscoveryView onAuth={() => setActiveTab('auth')} />
-          </div>
-          <div className={`absolute inset-0 transition-all duration-300 ${activeTab === 'liked' ? 'opacity-100 translate-x-0 z-10' : 'opacity-0 translate-x-full z-0 pointer-events-none'}`}>
-            <LikedSongsView />
-          </div>
-          <div className={`absolute inset-0 transition-all duration-300 ${activeTab === 'auth' ? 'opacity-100 scale-100 z-20 bg-slate-950' : 'opacity-0 scale-95 z-0 pointer-events-none'}`}>
-            <AuthView onBack={() => setActiveTab('discover')} />
-          </div>
+          {showGenreSelection ? (
+            <GenreSelectionView onComplete={() => setActiveTab('discover')} />
+          ) : (
+            <>
+              <div className={`absolute inset-0 transition-all duration-300 ${activeTab === 'discover' ? 'opacity-100 translate-x-0 z-10' : 'opacity-0 -translate-x-full z-0 pointer-events-none'}`}>
+                <DiscoveryView onAuth={() => setActiveTab('auth')} />
+              </div>
+              <div className={`absolute inset-0 transition-all duration-300 ${activeTab === 'liked' ? 'opacity-100 translate-x-0 z-10' : 'opacity-0 translate-x-full z-0 pointer-events-none'}`}>
+                <LikedSongsView />
+              </div>
+              <div className={`absolute inset-0 transition-all duration-300 ${activeTab === 'auth' ? 'opacity-100 scale-100 z-20 bg-slate-950' : 'opacity-0 scale-95 z-0 pointer-events-none'}`}>
+                <AuthView onBack={() => setActiveTab('discover')} />
+              </div>
+            </>
+          )}
         </main>
 
         {/* Navigation Bar */}
-        <nav className="flex items-center justify-around py-4 border-t border-slate-800 bg-slate-900/80 backdrop-blur-xl z-50 shrink-0">
-          <button 
-            onClick={() => setActiveTab('discover')}
-            className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'discover' ? 'text-pink-500 scale-110' : 'text-slate-500 hover:text-slate-300'}`}
-          >
-            <Music className="w-6 h-6" />
-            <span className="text-[10px] font-bold uppercase tracking-wider">Discover</span>
-          </button>
-          <button 
-            onClick={() => setActiveTab('liked')}
-            className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'liked' ? 'text-pink-500 scale-110' : 'text-slate-500 hover:text-slate-300'}`}
-          >
-            <Heart className="w-6 h-6" />
-            <span className="text-[10px] font-bold uppercase tracking-wider">Liked</span>
-          </button>
-        </nav>
+        {!showGenreSelection && (
+          <nav className="flex items-center justify-around py-4 border-t border-slate-800 bg-slate-900/80 backdrop-blur-xl z-50 shrink-0">
+            <button 
+              onClick={() => setActiveTab('discover')}
+              className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'discover' ? 'text-pink-500 scale-110' : 'text-slate-500 hover:text-slate-300'}`}
+            >
+              <Music className="w-6 h-6" />
+              <span className="text-[10px] font-bold uppercase tracking-wider">Discover</span>
+            </button>
+            <button 
+              onClick={() => setActiveTab('liked')}
+              className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'liked' ? 'text-pink-500 scale-110' : 'text-slate-500 hover:text-slate-300'}`}
+            >
+              <Heart className="w-6 h-6" />
+              <span className="text-[10px] font-bold uppercase tracking-wider">Liked</span>
+            </button>
+          </nav>
+        )}
       </div>
     </QueryClientProvider>
   );

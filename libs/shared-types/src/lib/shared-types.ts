@@ -65,8 +65,19 @@ export interface AuthResponse {
   user: {
     id: number;
     email: string;
+    preferredGenres?: number[];
   };
   accessToken: string;
+}
+
+export interface Genre {
+  id: number;
+  name: string;
+  picture?: string;
+}
+
+export interface UpdateGenresRequest {
+  genreIds: number[];
 }
 
 export interface RegisterRequest {

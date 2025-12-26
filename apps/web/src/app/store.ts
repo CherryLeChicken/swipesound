@@ -10,9 +10,10 @@ interface AppState {
   setCurrentIndex: (index: number) => void;
   currentPreviewUrl: string | undefined;
   setCurrentPreviewUrl: (url: string | undefined) => void;
-  user: { id: number; email: string } | null;
+  user: { id: number; email: string; preferredGenres?: number[] } | null;
   token: string | null;
-  setAuth: (user: { id: number; email: string } | null, token: string | null) => void;
+  setAuth: (user: { id: number; email: string; preferredGenres?: number[] } | null, token: string | null) => void;
+  setUser: (user: { id: number; email: string; preferredGenres?: number[] } | null) => void;
   logout: () => void;
 }
 
@@ -31,6 +32,7 @@ export const useStore = create<AppState>()(
         user: null,
         token: null,
         setAuth: (user, token) => set({ user, token }),
+        setUser: (user) => set({ user }),
         logout: () => set({ user: null, token: null }),
       };
     },

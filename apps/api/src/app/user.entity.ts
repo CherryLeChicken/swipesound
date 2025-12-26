@@ -18,6 +18,9 @@ export class User {
   @Column({ type: 'timestamp', nullable: true })
   resetTokenExpires: Date;
 
+  @Column({ type: 'int', array: true, default: '{}' })
+  preferredGenres: number[];
+
   @OneToMany(() => Interaction, (interaction) => interaction.user)
   interactions: Interaction[];
 
