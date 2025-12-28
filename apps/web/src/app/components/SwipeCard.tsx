@@ -7,9 +7,10 @@ interface SwipeCardProps {
   song: Song;
   onSwipe: (direction: 'left' | 'right') => void;
   isActive: boolean;
+  custom?: 'left' | 'right' | null;
 }
 
-export const SwipeCard: React.FC<SwipeCardProps> = ({ song, onSwipe, isActive }) => {
+export const SwipeCard: React.FC<SwipeCardProps> = ({ song, onSwipe, isActive, custom }) => {
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-25, 25]);
   const opacity = useTransform(x, [-200, -150, 0, 150, 200], [0, 1, 1, 1, 0]);
@@ -24,15 +25,33 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({ song, onSwipe, isActive })
     }
   };
 
-  if (!isActive) return null;
+  const cardVariants = {
+    initial: { scale: 0.9, opacity: 0 },
+    animate: { 
+      scale: 1, 
+      opacity: 1,
+      transition: { duration: 0.5 }
+    },
+    exit: (direction: 'left' | 'right' | null) => ({
+      x: direction === 'right' ? 1000 : direction === 'left' ? -1000 : 0,
+      opacity: 0,
+      scale: 0.5,
+      transition: { duration: 0.6 }
+    })
+  };
 
   return (
     <motion.div
       style={{ x, rotate, opacity }}
-      drag="x"
+      drag={isActive ? "x" : false}
       dragConstraints={{ left: 0, right: 0 }}
       onDragEnd={handleDragEnd}
-      className="absolute w-full max-w-[340px] aspect-[3/4] cursor-grab active:cursor-grabbing"
+      custom={custom}
+      variants={cardVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      className="absolute w-full max-w-[340px] aspect-[3/4] cursor-grab active:cursor-grabbing z-10"
     >
       <div className="relative w-full h-full rounded-3xl overflow-hidden shadow-2xl border border-slate-800 bg-slate-900">
         {/* Album Art */}

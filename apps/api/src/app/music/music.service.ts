@@ -24,12 +24,14 @@ export class MusicService {
       let baseSongs: Song[] = [];
       const recommendedSongs: Song[] = [];
 
-      // 1. Fetch recent history to analyze behavior
+      // 1. Fetch recent history to analyze behavior and prevent repeats
       const recentHistory = await this.interactionRepository.find({
         where: user ? { user: { id: user.id } } : { sessionId },
-        take: 20,
+        take: 100, // Look back further to prevent repeats
         order: { createdAt: 'DESC' }
       });
+
+      const seenSongIds = new Set(recentHistory.map(i => i.songId.toString()));
 
       // Analyze genre-specific skip rates
       const genreStats: Record<number, { likes: number, skips: number }> = {};
@@ -123,7 +125,14 @@ export class MusicService {
       
       // Mix them
       const finalPool = [...recommendedSongs, ...baseSongs];
-      const shuffled = shuffleArray(finalPool);
+      
+      // Filter out duplicates and songs the user has already seen
+      const filteredPool = finalPool.filter(song => !seenSongIds.has(song.id.toString()));
+      
+      // Deduplicate the pool itself (in case recommendations and charts overlap)
+      const uniquePool = Array.from(new Map(filteredPool.map(s => [s.id, s])).values());
+      
+      const shuffled = shuffleArray(uniquePool);
       
       return shuffled;
     } catch (error) {

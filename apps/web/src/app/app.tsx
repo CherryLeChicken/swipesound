@@ -5,6 +5,7 @@ import { SwipeCard } from './components/SwipeCard';
 import { useStore } from './store';
 import { useAudioPlayer } from './hooks/useAudioPlayer';
 import { Song, SwipeType, AuthResponse, Genre } from '@swipesound/shared-types';
+import { AnimatePresence } from 'framer-motion';
 
 const queryClient = new QueryClient();
 
@@ -320,6 +321,7 @@ function DiscoveryView({ onAuth, isActive }: { onBack?: () => void, onAuth?: () 
   const { sessionId, setSessionId, currentIndex, setCurrentIndex, setCurrentPreviewUrl, token } = useStore();
   const queryClient = useQueryClient();
   const [hasStarted, setHasStarted] = useState(false);
+  const [lastDirection, setLastDirection] = useState<'left' | 'right' | null>(null);
 
   // Ensure session ID exists
   useEffect(() => {
@@ -411,6 +413,7 @@ function DiscoveryView({ onAuth, isActive }: { onBack?: () => void, onAuth?: () 
     if (!songs || !songs[currentIndex]) return;
     
     const song = songs[currentIndex];
+    setLastDirection(direction);
 
     swipeMutation.mutate({ 
       songId: song.id, 
@@ -422,7 +425,10 @@ function DiscoveryView({ onAuth, isActive }: { onBack?: () => void, onAuth?: () 
       genreId: song.genreId
     });
     
-    setCurrentIndex(currentIndex + 1);
+    // Use a small timeout to let the animation start before switching index
+    setTimeout(() => {
+      setCurrentIndex(currentIndex + 1);
+    }, 100);
   };
 
   const handleRestart = () => {
@@ -500,12 +506,17 @@ function DiscoveryView({ onAuth, isActive }: { onBack?: () => void, onAuth?: () 
       )}
 
       {/* Current Active Card */}
-      <SwipeCard 
-        key={songs[currentIndex].id}
-        song={songs[currentIndex]} 
-        onSwipe={handleSwipe}
-        isActive={true}
-      />
+      <AnimatePresence custom={lastDirection}>
+        {songs[currentIndex] && (
+          <SwipeCard 
+            key={songs[currentIndex].id}
+            song={songs[currentIndex]} 
+            onSwipe={handleSwipe}
+            isActive={true}
+            custom={lastDirection}
+          />
+        )}
+      </AnimatePresence>
 
       {!token && (
         <div className="absolute top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-slate-900/80 backdrop-blur-md rounded-full border border-slate-800 text-[10px] font-bold text-slate-500 uppercase tracking-widest z-20 flex items-center gap-2">
