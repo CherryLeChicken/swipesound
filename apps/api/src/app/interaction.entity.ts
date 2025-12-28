@@ -22,6 +22,9 @@ export class Interaction {
   @Column({ type: 'varchar', nullable: true })
   previewUrl: string;
 
+  @Column({ type: 'int', nullable: true })
+  genreId: number;
+
   @Column({
     type: 'enum',
     enum: SwipeType,

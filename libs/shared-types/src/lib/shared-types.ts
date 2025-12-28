@@ -41,6 +41,7 @@ export interface Song {
   artist: Artist;
   album: Album;
   type: string;
+  genreId?: number; // Added to track genre
 }
 
 export enum SwipeType {
@@ -55,6 +56,7 @@ export interface SwipeRequest {
   artistName?: string;
   albumArt?: string;
   previewUrl?: string;
+  genreId?: number;
 }
 
 export interface LikedSong extends Song {

@@ -12,6 +12,17 @@ const queryClient = new QueryClient();
 // Get the API base URL from environment variables or default to /api
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
+const GENRE_COLORS: Record<number, string> = {
+  132: 'from-pink-600 to-rose-700',    // Pop
+  116: 'from-indigo-600 to-blue-700',  // Rap
+  152: 'from-red-700 to-orange-800',   // Rock
+  113: 'from-fuchsia-600 to-purple-700', // Dance
+  129: 'from-amber-600 to-yellow-700', // Jazz
+  106: 'from-cyan-600 to-sky-700',     // Electro
+  165: 'from-emerald-600 to-teal-700', // R&B
+  85:  'from-slate-700 to-zinc-800',    // Alternative
+};
+
 function AuthView({ onBack }: { onBack: () => void }) {
   const [view, setView] = useState<'login' | 'signup' | 'forgot' | 'reset'>('login');
   const [email, setEmail] = useState('');
@@ -268,24 +279,25 @@ function GenreSelectionView({ onComplete }: { onComplete: () => void }) {
             <button
               key={genre.id}
               onClick={() => toggleGenre(genre.id)}
-              className={`relative overflow-hidden aspect-video rounded-2xl border-2 transition-all group ${
+              className={`relative overflow-hidden aspect-video rounded-3xl border-2 transition-all duration-300 group flex items-center justify-center ${
                 selectedIds.includes(genre.id) 
-                  ? 'border-pink-500 ring-2 ring-pink-500/20' 
-                  : 'border-slate-800 hover:border-slate-700'
-              }`}
+                  ? 'border-white scale-[0.98] shadow-2xl shadow-pink-500/20' 
+                  : 'border-slate-800 hover:border-slate-700 hover:scale-[1.02]'
+              } bg-gradient-to-br ${GENRE_COLORS[genre.id] || 'from-slate-800 to-slate-900'}`}
             >
-              {genre.picture && (
-                <img 
-                  src={genre.picture} 
-                  alt={genre.name}
-                  className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-opacity"
-                />
-              )}
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent" />
-              <span className="absolute bottom-3 left-3 font-bold text-lg">{genre.name}</span>
+              <div className={`absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors ${
+                selectedIds.includes(genre.id) ? 'bg-black/0' : ''
+              }`} />
+              
+              <span className={`relative font-black text-xl tracking-tight uppercase italic drop-shadow-md transition-transform duration-300 ${
+                selectedIds.includes(genre.id) ? 'scale-110' : 'group-hover:scale-105'
+              }`}>
+                {genre.name}
+              </span>
+
               {selectedIds.includes(genre.id) && (
-                <div className="absolute top-2 right-2 bg-pink-500 rounded-full p-1">
-                  <Check className="w-3 h-3 text-white" strokeWidth={4} />
+                <div className="absolute top-3 right-3 bg-white rounded-full p-1 animate-in zoom-in duration-300 shadow-lg">
+                  <Check className="w-3 h-3 text-pink-600" strokeWidth={4} />
                 </div>
               )}
             </button>
@@ -305,7 +317,7 @@ function GenreSelectionView({ onComplete }: { onComplete: () => void }) {
   );
 }
 
-function DiscoveryView({ onAuth }: { onBack?: () => void, onAuth?: () => void }) {
+function DiscoveryView({ onAuth, isActive }: { onBack?: () => void, onAuth?: () => void, isActive: boolean }) {
   const { sessionId, setSessionId, currentIndex, setCurrentIndex, setCurrentPreviewUrl, token } = useStore();
   const queryClient = useQueryClient();
   const [hasStarted, setHasStarted] = useState(false);
@@ -353,14 +365,16 @@ function DiscoveryView({ onAuth }: { onBack?: () => void, onAuth?: () => void })
       title, 
       artistName, 
       albumArt, 
-      previewUrl 
+      previewUrl,
+      genreId 
     }: { 
       songId: number, 
       type: SwipeType,
       title?: string,
       artistName?: string,
       albumArt?: string,
-      previewUrl?: string
+      previewUrl?: string,
+      genreId?: number
     }) => {
       if (!sessionId && !token) {
         throw new Error('Session not initialized');
@@ -383,7 +397,8 @@ function DiscoveryView({ onAuth }: { onBack?: () => void, onAuth?: () => void })
           title,
           artistName,
           albumArt,
-          previewUrl
+          previewUrl,
+          genreId
         }),
       });
       return res.json();
@@ -404,7 +419,8 @@ function DiscoveryView({ onAuth }: { onBack?: () => void, onAuth?: () => void })
       title: song.title,
       artistName: song.artist?.name,
       albumArt: song.album?.cover_big,
-      previewUrl: song.preview
+      previewUrl: song.preview,
+      genreId: song.genreId
     });
     
     setCurrentIndex(currentIndex + 1);
@@ -414,6 +430,17 @@ function DiscoveryView({ onAuth }: { onBack?: () => void, onAuth?: () => void })
     setCurrentIndex(0);
     refetch();
   };
+
+  // Keyboard Shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!hasStarted || !isActive) return;
+      if (e.key === 'ArrowLeft') handleSwipe('left');
+      if (e.key === 'ArrowRight') handleSwipe('right');
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [hasStarted, isActive, songs, currentIndex]);
 
   if (isLoading) return <div className="flex items-center justify-center h-full"><Loader2 className="w-8 h-8 animate-spin text-pink-500" /></div>;
   if (isError) return <div className="text-red-500 p-8 text-center">Error loading music.</div>;
@@ -488,13 +515,21 @@ function DiscoveryView({ onAuth }: { onBack?: () => void, onAuth?: () => void })
         </div>
       )}
       
-      {/* Desktop Controls Fallback */}
-      <div className="absolute bottom-10 flex gap-12 sm:hidden lg:flex pointer-events-none">
-         <button onClick={() => handleSwipe('left')} className="pointer-events-auto bg-slate-900/80 p-4 rounded-full border border-slate-700 hover:scale-110 transition-transform shadow-xl">
-           <X className="w-8 h-8 text-red-500" />
+      {/* Desktop/Mobile Controls Fallback */}
+      <div className="absolute bottom-12 flex gap-12 z-20 pointer-events-none">
+         <button 
+           onClick={() => handleSwipe('left')} 
+           className="pointer-events-auto bg-slate-900/80 p-5 rounded-full border border-slate-700 hover:scale-110 active:scale-90 transition-all shadow-2xl group"
+           title="Skip (Left Arrow)"
+         >
+           <X className="w-8 h-8 text-red-500 group-hover:drop-shadow-[0_0_8px_rgba(239,68,68,0.4)]" />
          </button>
-         <button onClick={() => handleSwipe('right')} className="pointer-events-auto bg-slate-900/80 p-4 rounded-full border border-slate-700 hover:scale-110 transition-transform shadow-xl">
-           <Heart className="w-8 h-8 text-green-500 fill-green-500" />
+         <button 
+           onClick={() => handleSwipe('right')} 
+           className="pointer-events-auto bg-slate-900/80 p-5 rounded-full border border-slate-700 hover:scale-110 active:scale-90 transition-all shadow-2xl group"
+           title="Like (Right Arrow)"
+         >
+           <Heart className="w-8 h-8 text-green-500 fill-green-500 group-hover:drop-shadow-[0_0_8px_rgba(34,197,94,0.4)]" />
          </button>
       </div>
     </div>
@@ -543,43 +578,63 @@ function LikedSongsView() {
   if (isLoading) return <div className="flex items-center justify-center h-full"><Loader2 className="w-8 h-8 animate-spin text-pink-500" /></div>;
   if (!songs || songs.length === 0) {
     return (
-      <div className="text-center text-slate-500 p-12 h-full flex flex-col items-center justify-center">
-        <Heart className="w-12 h-12 mx-auto mb-4 opacity-20" />
-        <p>No liked songs yet. Start swiping!</p>
+      <div className="text-center text-slate-500 p-12 h-full flex flex-col items-center justify-center animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="w-20 h-20 bg-slate-900 rounded-full flex items-center justify-center mb-6 mx-auto border border-slate-800">
+          <Heart className="w-10 h-10 opacity-20" />
+        </div>
+        <h3 className="text-xl font-bold text-slate-300">No liked songs yet</h3>
+        <p className="mt-2 text-sm max-w-[200px] mx-auto">Start swiping on the Discover tab to build your collection.</p>
       </div>
     );
   }
 
   return (
-    <div className="w-full h-full p-4 overflow-y-auto custom-scrollbar">
-      <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-        <ListMusic className="text-pink-500" />
-        Liked Songs
-      </h2>
-      <div className="grid gap-3 pb-24">
-        {songs.map(song => (
-          <div key={song.id} className="flex items-center gap-4 p-3 bg-slate-900/50 rounded-2xl border border-slate-800 hover:border-pink-500/50 transition-colors group">
-            <img src={song.album.cover_small} className="w-14 h-14 rounded-lg shadow-md" alt={song.title} />
-            <div className="flex-1 min-w-0">
-              <h3 className="font-bold truncate text-slate-100 group-hover:text-pink-500 transition-colors">{song.title}</h3>
-              <p className="text-sm text-slate-400 truncate">{song.artist.name}</p>
+    <div className="w-full h-full p-6 flex flex-col animate-in fade-in duration-500">
+      <header className="shrink-0 mb-6">
+        <h2 className="text-3xl font-black tracking-tight flex items-center gap-3">
+          <div className="p-2 bg-pink-500/10 rounded-xl">
+            <ListMusic className="text-pink-500 w-6 h-6" />
+          </div>
+          Liked Songs
+          <span className="ml-auto text-sm font-bold bg-slate-900 px-3 py-1 rounded-full border border-slate-800 text-slate-500">
+            {songs.length}
+          </span>
+        </h2>
+      </header>
+
+      <div className="flex-1 overflow-y-auto custom-scrollbar -mx-2 px-2 pb-24 space-y-3">
+        {songs.map((song, index) => (
+          <div 
+            key={song.id} 
+            className="flex items-center gap-4 p-3 bg-slate-900/40 hover:bg-slate-900/60 rounded-2xl border border-slate-800/50 hover:border-pink-500/30 transition-all group animate-in fade-in slide-in-from-right-4 duration-300"
+            style={{ animationDelay: `${index * 50}ms` }}
+          >
+            <div className="relative shrink-0">
+              <img src={song.album.cover_small} className="w-16 h-16 rounded-xl shadow-lg object-cover" alt={song.title} />
+              <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors rounded-xl" />
             </div>
-            <div className="flex items-center gap-2">
+            
+            <div className="flex-1 min-w-0">
+              <h3 className="font-bold truncate text-slate-100 group-hover:text-pink-500 transition-colors leading-tight">{song.title}</h3>
+              <p className="text-xs text-slate-400 truncate mt-1 font-medium uppercase tracking-wider">{song.artist.name}</p>
+            </div>
+
+            <div className="flex items-center gap-1">
               <a 
                 href={song.link} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="p-2 text-slate-500 hover:text-pink-500 transition-colors"
+                className="p-2.5 text-slate-500 hover:text-white hover:bg-slate-800 rounded-full transition-all"
                 title="Open in Deezer"
               >
-                <Music className="w-5 h-5" />
+                <Play className="w-4 h-4 fill-current" />
               </a>
               <button
                 onClick={() => deleteMutation.mutate(song.id)}
-                className="p-2 text-slate-500 hover:text-red-500 transition-colors"
+                className="p-2.5 text-slate-500 hover:text-red-500 hover:bg-red-500/10 rounded-full transition-all"
                 title="Remove from liked"
               >
-                <Trash2 className="w-5 h-5" />
+                <Trash2 className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -652,7 +707,7 @@ export function App() {
           ) : (
             <>
               <div className={`absolute inset-0 transition-all duration-300 ${activeTab === 'discover' ? 'opacity-100 translate-x-0 z-10' : 'opacity-0 -translate-x-full z-0 pointer-events-none'}`}>
-                <DiscoveryView onAuth={() => setActiveTab('auth')} />
+                <DiscoveryView onAuth={() => setActiveTab('auth')} isActive={activeTab === 'discover'} />
               </div>
               <div className={`absolute inset-0 transition-all duration-300 ${activeTab === 'liked' ? 'opacity-100 translate-x-0 z-10' : 'opacity-0 translate-x-full z-0 pointer-events-none'}`}>
                 <LikedSongsView />

@@ -89,8 +89,10 @@ Following the `stack.json` and `devrules.md`, the system will be built as an Nx 
 1. **Shadcn/UI Integration**: Use `Card`, `Button`, and `ScrollArea` for the "Liked Songs" list.
 2. **Accessibility**: Add keyboard shortcuts and visible tap buttons for swipe actions.
      - **Verification**: Test swiping with Left/Right arrow keys.
-3. **Local Preference Logic**: Implement lightweight bias in `api` based on session history.
-     - **Verification**: Like several "Rock" songs and verify that subsequent discovery results lean more towards "Rock".
+3. **Adaptive Discovery Algorithm**:
+   - Implement "Skip Fatigue" detection: Analyzes the last 10 interactions.
+   - If skip rate is > 70%, the algorithm triggers a "Shakeup" and rotates to different genres to break repetition.
+   - **Verification**: Skip 7 songs in a row and verify that the next set of cards contains different genres than your initial preferences.
 
 ---
 
@@ -116,5 +118,7 @@ Following the `stack.json` and `devrules.md`, the system will be built as an Nx 
 4. **Step 4**: Build the `apps/web` basic layout and Tailwind config.
 5. **Step 5**: Implement the Swipe Card with Framer Motion.
 6. **Step 6**: Connect Frontend to Backend using React Query.
-7. **Step 7**: Add final UI touches and ensure mobile responsiveness.
+7. **Step 7**: Implement Authentication and User profiles.
+8. **Step 8**: Implement Genre Selection and adaptive discovery logic.
+9. **Step 9**: Add final UI touches and ensure mobile responsiveness.
 

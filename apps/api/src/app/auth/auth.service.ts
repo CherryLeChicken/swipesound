@@ -12,14 +12,14 @@ import { LoginRequest, RegisterRequest, AuthResponse, ForgotPasswordRequest, Res
 export class AuthService {
   private resend: Resend | null = null;
   private readonly SUPPORTED_GENRES: Genre[] = [
-    { id: 132, name: 'Pop', picture: 'https://e-cdns-images.dzcdn.net/images/misc/ed6ccf0f4a864d4a856636733ec5a109/250x250-000000-80-0-0.jpg' },
-    { id: 116, name: 'Rap/Hip Hop', picture: 'https://e-cdns-images.dzcdn.net/images/misc/7892b109e3ec0f88a9194ec71f985e50/250x250-000000-80-0-0.jpg' },
-    { id: 152, name: 'Rock', picture: 'https://e-cdns-images.dzcdn.net/images/misc/06d64939a311100f28e10036f0a3b836/250x250-000000-80-0-0.jpg' },
-    { id: 113, name: 'Dance', picture: 'https://e-cdns-images.dzcdn.net/images/misc/67e8156108f972000049445100650000/250x250-000000-80-0-0.jpg' },
-    { id: 129, name: 'Jazz', picture: 'https://e-cdns-images.dzcdn.net/images/misc/803d153e4142f36f6d0a79354009ec8e/250x250-000000-80-0-0.jpg' },
-    { id: 106, name: 'Electro', picture: 'https://e-cdns-images.dzcdn.net/images/misc/655f4a7c000000000000000000000000/250x250-000000-80-0-0.jpg' },
-    { id: 165, name: 'R&B', picture: 'https://e-cdns-images.dzcdn.net/images/misc/d8544d6731d100000000000000000000/250x250-000000-80-0-0.jpg' },
-    { id: 85, name: 'Alternative', picture: 'https://e-cdns-images.dzcdn.net/images/misc/714f331031d100000000000000000000/250x250-000000-80-0-0.jpg' },
+    { id: 132, name: 'Pop' },
+    { id: 116, name: 'Rap/Hip Hop' },
+    { id: 152, name: 'Rock' },
+    { id: 113, name: 'Dance' },
+    { id: 129, name: 'Jazz' },
+    { id: 106, name: 'Electro' },
+    { id: 165, name: 'R&B' },
+    { id: 85, name: 'Alternative' },
   ];
 
   constructor(
