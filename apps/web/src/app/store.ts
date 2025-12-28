@@ -6,6 +6,8 @@ interface AppState {
   setSessionId: (id: string) => void;
   isMuted: boolean;
   setIsMuted: (muted: boolean) => void;
+  volume: number;
+  setVolume: (volume: number) => void;
   currentIndex: number;
   setCurrentIndex: (index: number) => void;
   currentPreviewUrl: string | undefined;
@@ -25,6 +27,8 @@ export const useStore = create<AppState>()(
         setSessionId: (id) => set({ sessionId: id }),
         isMuted: false,
         setIsMuted: (muted) => set({ isMuted: muted }),
+        volume: 0.8,
+        setVolume: (volume) => set({ volume }),
         currentIndex: 0,
         setCurrentIndex: (index) => set({ currentIndex: index }),
         currentPreviewUrl: undefined,

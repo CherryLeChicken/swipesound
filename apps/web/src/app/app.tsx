@@ -1,11 +1,10 @@
 import { QueryClient, QueryClientProvider, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState, useMemo } from 'react';
-import { Music, Heart, Disc, Loader2, ListMusic, Play, Trash2, LogIn, User as UserIcon, LogOut, Mail, Lock, Check } from 'lucide-react';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { Music, Heart, Disc, Loader2, ListMusic, Play, Trash2, LogIn, User as UserIcon, LogOut, Mail, Lock, Check, Volume2, VolumeX } from 'lucide-react';
 import { SwipeCard } from './components/SwipeCard';
 import { useStore } from './store';
 import { useAudioPlayer } from './hooks/useAudioPlayer';
 import { Song, SwipeType, AuthResponse, Genre } from '@swipesound/shared-types';
-import { useEffect } from 'react';
 
 const queryClient = new QueryClient();
 
@@ -516,7 +515,7 @@ function DiscoveryView({ onAuth, isActive }: { onBack?: () => void, onAuth?: () 
       )}
       
       {/* Desktop/Mobile Controls Fallback */}
-      <div className="absolute bottom-12 flex gap-12 z-20 pointer-events-none">
+      <div className="absolute bottom-12 flex items-center gap-8 z-20 pointer-events-none">
          <button 
            onClick={() => handleSwipe('left')} 
            className="pointer-events-auto bg-slate-900/80 p-5 rounded-full border border-slate-700 hover:scale-110 active:scale-90 transition-all shadow-2xl group"
@@ -524,6 +523,9 @@ function DiscoveryView({ onAuth, isActive }: { onBack?: () => void, onAuth?: () 
          >
            <X className="w-8 h-8 text-red-500 group-hover:drop-shadow-[0_0_8px_rgba(239,68,68,0.4)]" />
          </button>
+
+         <VolumeControl />
+
          <button 
            onClick={() => handleSwipe('right')} 
            className="pointer-events-auto bg-slate-900/80 p-5 rounded-full border border-slate-700 hover:scale-110 active:scale-90 transition-all shadow-2xl group"
@@ -648,6 +650,62 @@ const X = ({ className }: { className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
 );
 
+function VolumeControl() {
+  const { volume, setVolume, isMuted, setIsMuted } = useStore();
+  const [showSlider, setShowSlider] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleMouseEnter = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setShowSlider(true);
+  };
+
+  const handleMouseLeave = () => {
+    timeoutRef.current = setTimeout(() => {
+      setShowSlider(false);
+    }, 300); // 300ms grace period
+  };
+
+  return (
+    <div 
+      className="relative flex flex-col items-center pointer-events-auto"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <div className={`absolute bottom-full pb-4 transition-all duration-300 z-[100] ${showSlider ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-[10px] scale-95 pointer-events-none'}`}>
+        <div className="bg-slate-900/95 backdrop-blur-2xl border border-slate-800 p-4 rounded-3xl shadow-2xl flex items-center gap-3 ring-1 ring-white/10">
+          <VolumeX className="w-4 h-4 text-slate-500" />
+          <input 
+            type="range" 
+            min="0" 
+            max="1" 
+            step="0.01" 
+            value={volume}
+            onChange={(e) => {
+              setVolume(parseFloat(e.target.value));
+              if (isMuted) setIsMuted(false);
+            }}
+            className="w-32 h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-pink-500"
+          />
+          <Volume2 className="w-4 h-4 text-slate-500" />
+        </div>
+      </div>
+
+      <button 
+        onClick={() => setIsMuted(!isMuted)}
+        onFocus={() => setShowSlider(true)}
+        className={`p-4 rounded-full border transition-all shadow-xl group ${
+          isMuted || volume === 0 
+            ? 'bg-red-500/10 border-red-500/50 text-red-500' 
+            : 'bg-slate-900/80 border-slate-800 text-slate-400 hover:text-white hover:border-pink-500/50'
+        }`}
+      >
+        {isMuted || volume === 0 ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6 group-hover:scale-110 transition-transform" />}
+      </button>
+    </div>
+  );
+}
+
 export function App() {
   const [activeTab, setActiveTab] = useState<'discover' | 'liked' | 'auth'>('discover');
   const { currentPreviewUrl, user, logout } = useStore();
@@ -667,7 +725,7 @@ export function App() {
     <QueryClientProvider client={queryClient}>
       <div className="flex h-screen w-full flex-col bg-slate-950 text-slate-50 font-sans overflow-hidden select-none">
         {/* Header */}
-        <header className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950/80 backdrop-blur-lg z-50 shrink-0">
+        <header className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950/80 backdrop-blur-lg z-50 shrink-0 relative">
           <div className="flex items-center gap-2">
             <Music className="text-pink-500 w-6 h-6" />
             <h1 className="text-xl font-bold tracking-tight">SwipeSound</h1>
@@ -694,11 +752,11 @@ export function App() {
                 Sign In
               </button>
             )}
-            <button className="p-2 rounded-full hover:bg-slate-800 transition-colors relative">
-              <Disc className="w-5 h-5 text-slate-400" />
-            </button>
-          </div>
-        </header>
+                <button className="p-2 rounded-full hover:bg-slate-800 transition-colors relative">
+                  <Disc className="w-5 h-5 text-slate-400" />
+                </button>
+              </div>
+            </header>
 
         {/* Main Content */}
         <main className="flex-1 relative overflow-hidden flex flex-col items-center justify-center">

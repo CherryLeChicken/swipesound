@@ -1,14 +1,17 @@
 import { useState, useEffect, useRef } from 'react';
+import { useStore } from '../store';
 
 export const useAudioPlayer = (url?: string) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const { volume, isMuted } = useStore();
 
   useEffect(() => {
     if (!url) return;
 
     // Create new audio instance
     const audio = new Audio(url);
+    audio.volume = isMuted ? 0 : volume;
     audioRef.current = audio;
 
     // Setup listeners
@@ -30,6 +33,13 @@ export const useAudioPlayer = (url?: string) => {
       audioRef.current = null;
     };
   }, [url]);
+
+  // Handle Volume/Mute changes on the fly
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = isMuted ? 0 : volume;
+    }
+  }, [volume, isMuted]);
 
   const toggle = () => {
     if (audioRef.current) {
